@@ -2,6 +2,7 @@
 import logging
 import argparse
 import csv
+import json
 import zipfile
 import requests
 from pathlib import Path  
@@ -10,9 +11,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = REPO_ROOT / 'data' / 'raw'
 
-# 3. Config: PLUTO name, URL, output filename
+# 3. Config: one dict per source (name for logs, URL, filename in data/raw)
 SOURCES = [
     {"name": "PLUTO", "url": "https://s-media.nyc.gov/agencies/dcp/assets/files/zip/data-tools/bytes/pluto/nyc_pluto_26v3_csv.zip", "filename": "nyc_pluto_26v3_csv.zip"},
+    # Open Data's /resource/ API returns 1,000 rows by default; $limit raises that.
+    # main() logs the feature count, so a cut-off file would show up there.
+    {"name": "NTA 2020", "url": "https://data.cityofnewyork.us/resource/9nt8-h7nd.geojson?$limit=5000", "filename": "nta_2020.geojson"},
+    {"name": "StreetEasy", "url": "https://cdn-charts.streeteasy.com/rentals/All/medianAskingRent_All.zip", "filename": "medianAskingRent_All.zip"},
 ]
 
 # 4. Logging setup
@@ -66,7 +71,13 @@ def count_rows(csv_path):
         rows = sum(1 for _ in csv.reader(f))
     return rows - 1  # minus the header row
 
-# 8. main(): parse --force, run steps 5 to 7 for PLUTO, log results
+# 7b. count_features(geojson_path): polygons in a GeoJSON file
+def count_features(geojson_path):
+    # A GeoJSON file is one JSON object; its "features" list holds one item per shape.
+    with open(geojson_path, encoding="utf-8") as f:
+        return len(json.load(f)["features"])
+
+# 8. main(): parse --force, run steps 5 to 7 for each source, log results
 def main():
     # argparse reads command-line options. --force is a flag: present = True.
     parser = argparse.ArgumentParser(description="Download raw NYC data into data/raw.")
@@ -80,12 +91,14 @@ def main():
         logging.info(f"{source['name']}: {source['url']}")
         download(source["url"], dest, force=args.force)
 
-        # Zipped sources get extracted and row-counted. Non-zip sources
-        # (the NTA GeoJSON, once it's added) are logged by download() only.
+        # Zipped sources get extracted and row-counted; GeoJSON gets a feature count.
         if dest.suffix == ".zip":
             csv_path = unzip(dest, RAW_DIR, force=args.force)
             rows = count_rows(csv_path)
             logging.info(f"{source['name']}: {rows:,} data rows in {csv_path.name}")
+        elif dest.suffix == ".geojson":
+            features = count_features(dest)
+            logging.info(f"{source['name']}: {features:,} features in {dest.name}")
 
 # 9. Run main() when the file is executed directly
 # (python scripts/download.py), but not when another script imports it.
