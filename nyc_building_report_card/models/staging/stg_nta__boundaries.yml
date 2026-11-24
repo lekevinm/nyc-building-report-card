@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: stg_nta__boundaries
+    description: "2020 Neighborhood Tabulation Areas, one row per NTA (262), with the polygon in geom."
+    columns:
+      - name: nta_code
+        description: "NTA code (nta2020 in the raw file)."
+        data_tests:
+          - unique
+          - not_null
+      - name: nta_type
+        description: "0 = residential NTA; other values mark non-residential areas such as parks and airports."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 5, 6, 7, 8, 9]
+                quote: false
+      - name: geom
+        data_tests:
+          - not_null

@@ -1,0 +1,55 @@
+# Schema-file version. Every dbt properties file starts with this line.
+version: 2
+
+# Everything under "sources:" describes tables dbt reads but didn't build.
+sources:
+
+  # The source name. In a model you write {{ source('raw', 'raw_pluto') }},
+  # and 'raw' is this name. It groups the three tables load.py made.
+  - name: raw
+
+    # Where the tables actually live. Without this line dbt would look in a
+    # schema called "raw" (the source name) and fail. dbt debug showed main.
+    schema: main
+
+    # Shows up in dbt docs. One line on where the data comes from.
+    description: "Raw tables loaded into data/nyc.duckdb by scripts/load.py. Every CSV column is VARCHAR; types are set in staging."
+
+    # The list of tables in this source. Each "- name:" is one table.
+    tables:
+
+      # Second argument of source(). Must match the DuckDB table name exactly.
+      - name: raw_pluto
+        description: "PLUTO 26v3, one row per tax lot (858,312 rows, 99 columns). Includes ownername, which staging leaves out."
+
+        # Column-level properties. You only list columns you want to describe or
+        # test; the other 98 still exist and can be selected in staging.
+        columns:
+          - name: bbl
+            description: "Borough-block-lot ID, as decimal text (e.g. 4087790057.00000000). Staging casts it to an integer."
+
+            # Tests to run against this column. "data_tests" is the current key
+            # name; older tutorials say "tests", which still works in v1.
+            data_tests:
+              - unique      # fails if any bbl appears twice
+              - not_null    # fails if any bbl is NULL across all 858,312 rows
+
+      - name: raw_streeteasy
+        description: "StreetEasy median asking rent, wide: one row per area (182), one column per month from 2010-01 to 2026-10."
+        columns:
+          - name: areaName
+            description: "Area name. areaType says whether it's a neighborhood, borough or city."
+            data_tests:
+              - not_null
+              - unique      # not yet known; this run answers it
+
+      - name: raw_nta
+        description: "2020 Neighborhood Tabulation Areas (262 polygons), read with ST_Read. Has a GEOMETRY column."
+        columns:
+          # CONFIRM this name with the describe command before running tests.
+          # It's the NTA code column; I expect nta2020 but haven't checked it.
+          - name: nta2020
+            description: "NTA code, the key the marts join on."
+            data_tests:
+              - unique
+              - not_null

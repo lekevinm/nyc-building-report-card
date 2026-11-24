@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: stg_pluto__lots
+    description: "PLUTO 26v3, one row per tax lot (858,312), with types set. Keeps every lot; the rental-scope filter is applied in dim_building. ownername is left out."
+    columns:
+      - name: bbl
+        description: "Borough-block-lot ID as an integer. The model's key."
+        data_tests:
+          - unique
+          - not_null
+      - name: bldgclass
+        description: "DOF building class code. C* is walk-up, D* is elevator."
+      - name: unitsres
+        description: "Number of residential units."
+      - name: numfloors
+        description: "Number of floors. Can be fractional (e.g. 1.5)."
+      - name: yearbuilt
+        description: "Year built. NULL where PLUTO has 0 (unknown)."
+      - name: latitude
+        description: "Lot latitude. int_lots__nta uses it to place the lot in an NTA."
+      - name: longitude
+        description: "Lot longitude. int_lots__nta uses it to place the lot in an NTA."

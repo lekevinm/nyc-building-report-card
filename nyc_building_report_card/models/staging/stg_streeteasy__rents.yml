@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: stg_streeteasy__rents
+    description: "StreetEasy median asking rent, one row per area per month (182 areas x 202 months). Blank months are kept with a NULL rent."
+    columns:
+      - name: area_month_id
+        description: "area_name and month (YYYY-MM) joined by '|'. The model's key."
+        data_tests:
+          - unique
+          - not_null
+      - name: area_name
+        data_tests:
+          - not_null
+      - name: area_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['neighborhood', 'borough', 'city']
+      - name: month
+        data_tests:
+          - not_null
+      - name: median_asking_rent
+        description: "Median asking rent in dollars. NULL where StreetEasy has no value for that month."

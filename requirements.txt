@@ -1,2 +1,5 @@
 requests
 duckdb
+ipykernel
+pandas
+dbt-duckdb

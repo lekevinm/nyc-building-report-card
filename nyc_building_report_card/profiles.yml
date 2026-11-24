@@ -1,0 +1,9 @@
+#profile name — must match `profile:` in dbt_project.yml
+nyc_building_report_card:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ../data/nyc.duckdb
+      extensions:
+        - spatial
