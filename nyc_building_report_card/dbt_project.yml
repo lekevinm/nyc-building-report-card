@@ -34,3 +34,8 @@ models:
     # Config indicated by + and applies to all files under models/staging/
     staging:
       +materialized: view
+    # Spatial join and dimension tables are built once per run, not on every query.
+    intermediate:
+      +materialized: table
+    marts:
+      +materialized: table

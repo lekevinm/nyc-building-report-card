@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: dim_building
+    description: >
+      One row per rental building (BBL): PLUTO lots with building class C*
+      or D*, 3 or more residential units, co-ops and mobile homes excluded
+      (SPEC section 3). Carries the NTA from int_lots__nta; nta_code is NULL
+      where the lot couldn't be placed.
+    columns:
+      - name: bbl
+        description: "Borough-block-lot ID. One row per rental building."
+        data_tests:
+          - unique
+          - not_null
+      - name: nta_code
+        description: "2020 NTA the building's point falls in. NULL if it has no lat/lng or falls outside every NTA."
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_nta__boundaries')
+                field: nta_code
+      - name: bldgclass
+        description: "DOF building class. C* is walk-up, D* is elevator."
+        data_tests:
+          - not_null
+      - name: has_elevator
+        description: "True for D* (elevator) classes, false for C* (walk-up)."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+      - name: unitsres
+        description: "Number of residential units (3 or more)."
+      - name: numfloors
+        description: "Number of floors. Can be fractional; NULL where PLUTO has none."
+      - name: yearbuilt
+        description: "Year built. NULL where PLUTO has 0 (unknown)."
+      - name: latitude
+        description: "Lot latitude, for a building-point map."
+      - name: longitude
+        description: "Lot longitude, for a building-point map."

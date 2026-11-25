@@ -1,0 +1,53 @@
+version: 2
+
+seeds:
+  - name: nta_to_streeteasy
+    description: >
+      Hand-made crosswalk from 2020 NTAs to StreetEasy neighborhoods, one row
+      per NTA-StreetEasy pair. Every one of the 262 NTAs has at least one row.
+      An NTA that covers several StreetEasy neighborhoods has one row each; the
+      mart takes the median of their rents. NTAs with no StreetEasy match have
+      one row with a blank streeteasy_area. Drafted by Claude, reviewed by
+      Kevin (Nov 23, 2026).
+    config:
+      column_types:
+        nta_code: varchar
+        nta_name: varchar
+        streeteasy_area: varchar
+        match_type: varchar
+        note: varchar
+    data_tests:
+      # One row per pair. coalesce so the blank-area rows still count once.
+      - unique:
+          column_name: "nta_code || '|' || coalesce(streeteasy_area, '')"
+    columns:
+      - name: nta_code
+        description: "2020 NTA code. Not unique here: one NTA can have several rows."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_nta__boundaries')
+                field: nta_code
+      - name: nta_name
+        description: "NTA name, copied from the boundary file so the seed is readable on its own."
+      - name: streeteasy_area
+        description: "StreetEasy neighborhood name (area_name in stg_streeteasy__rents). Blank where match_type is none or non_residential."
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_streeteasy__rents')
+                field: area_name
+      - name: match_type
+        description: >
+          name: the StreetEasy name appears in the NTA name.
+          judgment: mapped by geography, the names differ.
+          none: residential NTA with no StreetEasy neighborhood (all of Staten Island, plus four in the Bronx).
+          non_residential: park, cemetery, airport or other nta_type other than 0.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['name', 'judgment', 'none', 'non_residential']
+      - name: note
+        description: "Why a row has no match, or 'CHECK' where the StreetEasy boundary is unclear."
