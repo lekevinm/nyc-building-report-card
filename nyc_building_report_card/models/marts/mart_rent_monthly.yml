@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: mart_rent_monthly
+    description: >
+      StreetEasy median asking rent, one row per area per month: all 182 areas
+      (176 neighborhoods, 5 boroughs and NYC as a whole) for all 202 months
+      from 2010-01. Months with no rent stay as rows with a NULL rent. Kept at
+      StreetEasy's grain, not NTA. Feeds the Tableau rent-over-time charts.
+      Drafted by Claude; design calls by Kevin (Nov 25, 2026).
+    columns:
+      - name: area_month_id
+        description: "area_name and month (YYYY-MM) joined by '|'. One row per area per month."
+        data_tests:
+          - unique
+          - not_null
+      - name: area_name
+        description: "StreetEasy area name. Neighborhood names match streeteasy_area in the crosswalk seed."
+        data_tests:
+          - not_null
+      - name: area_type
+        description: "neighborhood, borough or city. Filter on it to pick the lines for a chart."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['neighborhood', 'borough', 'city']
+      - name: borough
+        description: "Borough of the area. NULL for the NYC city row."
+      - name: month
+        description: "First day of the month."
+        data_tests:
+          - not_null
+      - name: median_asking_rent
+        description: "StreetEasy median asking rent for the area and month, in dollars. NULL where StreetEasy has no value."

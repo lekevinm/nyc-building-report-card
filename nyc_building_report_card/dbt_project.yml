@@ -39,3 +39,10 @@ models:
       +materialized: table
     marts:
       +materialized: table
+
+# Values that models read with var(). To try a different value for one run:
+#   dbt build --vars '{rent_12m_min_months: 6}'
+vars:
+  # Trailing 12-month median rent: a StreetEasy neighborhood counts only if at
+  # least this many of the 12 months have a rent (SPEC section 3, Nov 24, 2026).
+  rent_12m_min_months: 9

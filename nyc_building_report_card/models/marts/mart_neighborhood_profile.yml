@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: mart_neighborhood_profile
+    description: >
+      One row per 2020 NTA (all 262, residential or not), with StreetEasy
+      median asking rents and a profile of the NTA's rental buildings from
+      dim_building. The rent definitions are in SPEC section 3 (decided Nov 24,
+      2026). Feeds the map page and the Tableau dashboard. Drafted by Claude;
+      design calls by Kevin.
+    columns:
+      - name: nta_code
+        description: "2020 NTA code. One row per NTA."
+        data_tests:
+          - unique
+          - not_null
+      - name: nta_name
+        description: "NTA name from the city's boundary file."
+        data_tests:
+          - not_null
+      - name: borough
+        description: "Borough name."
+        data_tests:
+          - not_null
+      - name: nta_type
+        description: "0 = residential NTA. Other values mark parks, cemeteries, airports and other non-residential areas, which have no rent."
+      - name: streeteasy_areas
+        description: "StreetEasy neighborhoods mapped to this NTA in the crosswalk seed, in alphabetical order, separated by ', '. NULL where the seed has no match (match_type none or non_residential). The map page builds its StreetEasy listings link from it."
+      - name: rent_latest_month
+        description: "The month rent_latest comes from: the latest month with any StreetEasy neighborhood rent in the data. The same on every row."
+        data_tests:
+          - not_null
+      - name: rent_latest
+        description: "Median asking rent in rent_latest_month, in whole dollars. For an NTA with several StreetEasy neighborhoods, the median of those with a rent that month. NULL if none of them has one."
+      - name: rent_12m_median
+        description: "Median asking rent over the 12 months ending at rent_latest_month, in whole dollars. A StreetEasy neighborhood counts only if at least rent_12m_min_months (a dbt var in dbt_project.yml) of the 12 months have a rent. For an NTA with several, the median of those that pass. NULL if none passes."
+      - name: building_count
+        description: "Number of rental buildings from dim_building placed in this NTA. 0 if there are none."
+        data_tests:
+          - not_null
+      - name: elevator_share
+        description: "Share of the NTA's rental buildings that have an elevator (D* classes), counted by building, between 0 and 1, rounded to 3 decimals. NULL where building_count is 0."
+      - name: median_yearbuilt
+        description: "Median year built of the NTA's rental buildings, rounded to a whole year. Buildings with an unknown year are skipped."
+      - name: median_unitsres
+        description: "Median number of residential units per rental building, rounded to a whole number."
