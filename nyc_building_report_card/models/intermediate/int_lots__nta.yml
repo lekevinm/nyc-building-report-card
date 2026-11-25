@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: int_lots__nta
+    description: >
+      Every PLUTO lot placed in a 2020 NTA by point-in-polygon. One row per
+      lot (858,312). nta_code is NULL where the lot has no lat/lng or falls
+      outside every NTA polygon. Materialized as a table so the spatial join
+      runs once per build.
+    columns:
+      - name: bbl
+        description: "Borough-block-lot ID. One row per lot."
+        data_tests:
+          - unique
+          - not_null
+      - name: nta_code
+        description: "NTA the lot's point falls in. Ties on a shared boundary keep the lower code."
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_nta__boundaries')
+                field: nta_code
